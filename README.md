@@ -12,7 +12,7 @@ This code uses four main scripts, described below, to train and run a model for 
 
 You can install the dependencies for these scripts by creating a Docker image (see below) and running
 
-    pip install requirements.txt
+    pip install -r requirements.txt
 
 You can train you model by running
 

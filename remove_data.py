@@ -2,6 +2,7 @@
 
 # Load libraries.
 import os, sys, shutil, argparse
+from helper_code import *
 
 # Parse arguments.
 def get_parser():
@@ -27,19 +28,12 @@ def run(args):
             parent_folder = os.path.basename(input_folder)
             file_root, file_ext = os.path.splitext(file_name)
 
-            # If the file does not have labels, then copy it as-is.
-            if not (file_ext == '.txt' and file_root == parent_folder):
+            # If the file is not the binary signal data, then copy it.
+            if not (file_ext == '.mat'):
                 shutil.copy2(input_file, output_file)
-            # Otherwise, if the file does have labels, then remove the labels and copy it.
+            # Otherwise, if the file is signal data, then do not copy it.
             else:
-                with open(input_file, 'r') as f:
-                    input_lines = f.readlines() 
-
-                output_lines = [l for l in input_lines if not (l.startswith('Outcome') or l.startswith('CPC'))]
-                output_string = ''.join(output_lines)
-
-                with open(output_file, 'w') as f:
-                    f.write(output_string)                
+                pass 
 
 if __name__=='__main__':
     run(get_parser().parse_args(sys.argv[1:]))

@@ -6,7 +6,7 @@ from helper_code import *
 
 # Parse arguments.
 def get_parser():
-    description = 'Remove labels from the data.'
+    description = 'Remove data from the dataset.'
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('-i', '--input_folder', type=str, required=True)
     parser.add_argument('-o', '--output_folder', type=str, required=True)
@@ -17,7 +17,14 @@ def run(args):
     # Iterate over subfolders in the input folder.
     for root, folder_names, file_names in os.walk(args.input_folder):
         input_folder = root
-        output_folder = os.path.join(args.output_folder, *root.split(args.input_folder)[1:])
+
+        # Extract the subfolder of the input folder and use it for the output folder.
+        x, y = root, ''
+        while not os.path.samefile(args.input_folder, x):
+            x, y = os.path.split(x)[0], os.path.join(os.path.split(x)[1], y)
+        output_folder = os.path.join(args.output_folder, y)
+        
+        # Create the output folder if it does not already exist.
         os.makedirs(output_folder, exist_ok=True)
 
         # Iterate over each file in each subfolder.

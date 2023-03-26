@@ -30,7 +30,7 @@ You can run you trained model by running
 where
 
 - `model` (input; required) is a folder for loading your model, and
-- `test_data` (input; required) is a folder with the validation or test data files (you can use the training data for debugging and cross-validation), and
+- `test_data` (input; required) is a folder with the validation or test data files (you can use the training data for debugging and cross-validation, but the validation and test data will not have labels and will have 12, 24, 48, or 72 hours of data), and
 - `test_outputs` is a folder for saving your model outputs.
 
 The [Challenge website](https://physionetchallenges.org/2023/#data) provides a training database with a description of the contents and structure of the data files.
@@ -114,6 +114,14 @@ If you have trouble running your code, then please try the follow steps to run t
 
         root@[...]:/challenge# exit
         Exit
+
+## What about the other scripts in this repository?
+
+We included a few other scripts that we will use to run your code. You can use them to run your code in the same way:
+
+- `remove_data.py`: Remove the binary signal data, i.e., the EEG recordings. Usage: run `python remove_data.py -i input_folder -o output_folder` to copy the labels and metadata from `input_folder` to `output_folder`.
+- `remove_labels.py`: Remove the labels. Usage: run `python remove_labels.py -i input_folder -o output_folder` to copy the data and metadata from `input_folder` to `output_folder`.
+- `truncate_data.py`: Truncate the EEG recordings. Usage: run `python truncate_data.py -i input_folder -o output_folder -k 12` to truncate the EEG recordings to 12 hours. We will run your trained models on data with 12, 24, 48, and 72 hours of data.
 
 ## How do I learn more?
 

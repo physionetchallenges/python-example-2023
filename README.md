@@ -4,7 +4,7 @@
 
 This repository contains a simple example to illustrate how to format a Python entry for the George B. Moody PhysioNet Challenge 2023. You can try it by running the following commands on the Challenge training sets. These commands should take a few minutes or less to run from start to finish on a recent personal computer.
 
-For this example, we implemented a random forest model with several features. You can use different models, features, and libraries for your entry. This simpple example is designed **not** not to perform well, so you should **not** use it as a baseline for your model's performance.
+For this example, we implemented a random forest model with several features. You can use different models, features, and libraries for your entry. This simple example is designed **not** to perform well, so you should **not** use it as a baseline for your model's performance.
 
 This code uses four main scripts, described below, to train and run a model for the Challenge.
 

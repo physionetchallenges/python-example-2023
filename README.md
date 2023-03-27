@@ -2,9 +2,9 @@
 
 ## What's in this repository?
 
-This repository contains a simple example to illustrate how to format a Python entry for the George B. Moody PhysioNet Challenge 2023. You can try it by running the following commands on the Challenge training sets. These commands should take a few minutes or less to run from start to finish on a recent personal computer.
+This repository contains a simple example that illustrates how to format a Python entry for the George B. Moody PhysioNet Challenge 2023. We recommend that you use this repository as a template for your entry. You can remove some of the code, reuse other code, and add new code to create your entry. You do not need to use the models, features, and/or libraries in this example for your approach, and we encourage a diversity of approaches for the Challenge.
 
-For this example, we implemented a random forest model with several features. You can use different models, features, and libraries for your entry. This simple example is designed **not** to perform well, so you should **not** use it as a baseline for your model's performance.
+For this example, we implemented a random forest model with several features. This simpple example is designed **not** not to perform well, so you should **not** use it as a baseline for your model's performance. You can try it by running the following commands on the Challenge training sets. These commands should take a few minutes or less to run from start to finish on a recent personal computer.
 
 This code uses four main scripts, described below, to train and run a model for the Challenge.
 
@@ -43,11 +43,9 @@ where `labels` is a folder with labels for the data, such as the training databa
 
 ## Which scripts I can edit?
 
-We will run the `train_model.py` and `run_model.py` scripts to train and run your model, so please check these scripts and the functions that they call.
+Please edit the following script to add your code:
 
-Please edit the following script to add your training and testing code:
-
-* `team_code.py` is a script with functions for training and running your model.
+* `team_code.py` is a script with functions for training and running your trained model.
 
 Please do **not** edit the following scripts. We will use the unedited versions of these scripts when running your code:
 
@@ -115,13 +113,15 @@ If you have trouble running your code, then please try the follow steps to run t
         root@[...]:/challenge# exit
         Exit
 
-## What about the other scripts in this repository?
+## What else do I need?
 
-We included a few other scripts that we will use to run your code. You can use them to run your code in the same way:
+This repository does not include code for evaluating your entry. Please see the [evaluation code repository](https://github.com/physionetchallenges/evaluation-2023) for code and instructions for evaluating your entry using the Challenge scoring metric.
+
+This repository also includes code for preparing the validation and test sets. We will run your trained model on data without labels and with only 12, 24, 48, and 72 hours of recording data. You can use this code to prepare the training data in the same way that we prepare the validation and test sets.
 
 - `remove_data.py`: Remove the binary signal data, i.e., the EEG recordings. Usage: run `python remove_data.py -i input_folder -o output_folder` to copy the labels and metadata from `input_folder` to `output_folder`.
 - `remove_labels.py`: Remove the labels. Usage: run `python remove_labels.py -i input_folder -o output_folder` to copy the data and metadata from `input_folder` to `output_folder`.
-- `truncate_data.py`: Truncate the EEG recordings. Usage: run `python truncate_data.py -i input_folder -o output_folder -k 12` to truncate the EEG recordings to 12 hours. We will run your trained models on data with 12, 24, 48, and 72 hours of data.
+- `truncate_data.py`: Truncate the EEG recordings. Usage: run `python truncate_data.py -i input_folder -o output_folder -k 12` to truncate the EEG recordings to 12 hours. We will run your trained models on data with 12, 24, 48, and 72 hours of recording data.
 
 ## How do I learn more?
 
@@ -131,7 +131,7 @@ Please see the [Challenge website](https://physionetchallenges.org/2023/) for mo
 
 * [Challenge website](https://physionetchallenges.org/2023/)
 * [MATLAB example code](https://github.com/physionetchallenges/matlab-example-2023)
-* [Scoring code](https://github.com/physionetchallenges/evaluation-2023)
+* [Evaluation code](https://github.com/physionetchallenges/evaluation-2023)
 * [Frequently asked questions (FAQ) for this year's Challenge](https://physionetchallenges.org/2023/faq/)
 * [Frequently asked questions (FAQ) about the Challenges in general](https://physionetchallenges.org/faq/)
 

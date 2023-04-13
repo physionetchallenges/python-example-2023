@@ -14,7 +14,7 @@ You can install the dependencies for these scripts by creating a Docker image (s
 
     pip install -r requirements.txt
 
-You can train you model by running
+You can train your model by running
 
     python train_model.py training_data model
 
@@ -23,7 +23,7 @@ where
 - `training_data` (input; required) is a folder with the training data files and
 - `model` (output; required) is a folder for saving your model.
 
-You can run you trained model by running
+You can run your trained model by running
 
     python run_model.py model test_data test_outputs
 

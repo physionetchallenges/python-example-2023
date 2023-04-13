@@ -2,9 +2,9 @@
 
 ## What's in this repository?
 
-This repository contains a simple example that illustrates how to format a Python entry for the George B. Moody PhysioNet Challenge 2023. We recommend that you use this repository as a template for your entry. You can remove some of the code, reuse other code, and add new code to create your entry. You do not need to use the models, features, and/or libraries in this example for your approach, and we encourage a diversity of approaches for the Challenge.
+This repository contains a simple example that illustrates how to format a Python entry for the George B. Moody PhysioNet Challenge 2023. We recommend that you use this repository as a template for your entry. You can remove some of the code, reuse other code, and add new code to create your entry. You do not need to use the models, features, and/or libraries in this example for your approach. We encourage a diversity of approaches for the Challenge.
 
-For this example, we implemented a random forest model with several features. This simpple example is designed **not** not to perform well, so you should **not** use it as a baseline for your model's performance. You can try it by running the following commands on the Challenge training sets. These commands should take a few minutes or less to run from start to finish on a recent personal computer.
+For this example, we implemented a random forest model with several features. This simple example is designed **not** not to perform well, so you should **not** use it as a baseline for your model's performance. You can try it by running the following commands on the Challenge training set. These commands should take a few minutes or less to run from start to finish on a recent personal computer.
 
 This code uses four main scripts, described below, to train and run a model for the Challenge.
 
@@ -14,7 +14,7 @@ You can install the dependencies for these scripts by creating a Docker image (s
 
     pip install -r requirements.txt
 
-You can train you model by running
+You can train your model by running
 
     python train_model.py training_data model
 
@@ -23,13 +23,13 @@ where
 - `training_data` (input; required) is a folder with the training data files and
 - `model` (output; required) is a folder for saving your model.
 
-You can run you trained model by running
+You can run your trained model by running
 
     python run_model.py model test_data test_outputs
 
 where
 
-- `model` (input; required) is a folder for loading your model, and
+- `model` (input; required) is a folder for loading your model,
 - `test_data` (input; required) is a folder with the validation or test data files (you can use the training data for debugging and cross-validation, but the validation and test data will not have labels and will have 12, 24, 48, or 72 hours of data), and
 - `test_outputs` is a folder for saving your model outputs.
 
@@ -39,7 +39,11 @@ You can evaluate your model by pulling or downloading the [evaluation code](http
 
     python evaluate_model.py labels outputs scores.csv
 
-where `labels` is a folder with labels for the data, such as the training database on the PhysioNet webpage; `outputs` is a folder containing files with your model's outputs for the data; and `scores.csv` (optional) is a collection of scores for your model.
+where
+
+- `labels` is a folder with labels for the data, such as the training database on the PhysioNet webpage,
+- `outputs` is a folder containing files with your model's outputs for the data, and
+- `scores.csv` (optional) is a collection of scores for your model.
 
 ## Which scripts I can edit?
 
@@ -63,7 +67,7 @@ To load and run your trained model, please edit the `load_challenge_model` and `
 
 ## How do I run these scripts in Docker?
 
-Docker and similar platforms allow you to containerize and package your code with specific dependencies so that you can run your code reliably in other computing environments and operating systems.
+Docker and similar platforms allow you to containerize and package your code with specific dependencies so that your code can be reliably run in other computational environments .
 
 To guarantee that we can run your code, please [install](https://docs.docker.com/get-docker/) Docker, build a Docker image from your code, and run it on the training data. To quickly check your code for bugs, you may want to run it on a small subset of the training data.
 
@@ -76,7 +80,7 @@ If you have trouble running your code, then please try the follow steps to run t
         user@computer:~$ cd example
         user@computer:~/example$ mkdir training_data test_data model test_outputs
 
-2. Download the training data from the [Challenge website](https://physionetchallenges.org/2023). Put some of the training data in `training_data` and `test_data`. You can use some of the training data to check your code (and should perform cross-validation on the training data to evaluate your algorithm).
+2. Download the training data from the [Challenge website](https://physionetchallenges.org/2023/#data). Put some of the training data in `training_data` and `test_data`. You can use some of the training data to check your code (and you should perform cross-validation on the training data to evaluate your algorithm).
 
 3. Download or clone this repository in your terminal.
 
@@ -117,11 +121,11 @@ If you have trouble running your code, then please try the follow steps to run t
 
 This repository does not include code for evaluating your entry. Please see the [evaluation code repository](https://github.com/physionetchallenges/evaluation-2023) for code and instructions for evaluating your entry using the Challenge scoring metric.
 
-This repository also includes code for preparing the validation and test sets. We will run your trained model on data without labels and with only 12, 24, 48, and 72 hours of recording data. You can use this code to prepare the training data in the same way that we prepare the validation and test sets.
+This repository also includes code for preparing the validation and test sets. We will run your trained model on data without labels and with 12, 24, 48, and 72 hours of recording data to evaluate its performance with limited amounts of data. You can use this code to prepare the training data in the same way that we prepare the validation and test sets.
 
-- `remove_data.py`: Remove the binary signal data, i.e., the EEG recordings. Usage: run `python remove_data.py -i input_folder -o output_folder` to copy the labels and metadata from `input_folder` to `output_folder`.
-- `remove_labels.py`: Remove the labels. Usage: run `python remove_labels.py -i input_folder -o output_folder` to copy the data and metadata from `input_folder` to `output_folder`.
 - `truncate_data.py`: Truncate the EEG recordings. Usage: run `python truncate_data.py -i input_folder -o output_folder -k 12` to truncate the EEG recordings to 12 hours. We will run your trained models on data with 12, 24, 48, and 72 hours of recording data.
+- `remove_labels.py`: Remove the labels. Usage: run `python remove_labels.py -i input_folder -o output_folder` to copy the data and metadata (but not the labels) from `input_folder` to `output_folder`.
+- `remove_data.py`: Remove the binary signal data, i.e., the EEG recordings. Usage: run `python remove_data.py -i input_folder -o output_folder` to copy the labels and metadata (but not the EEG recording data) from `input_folder` to `output_folder`.
 
 ## How do I learn more?
 
@@ -134,4 +138,3 @@ Please see the [Challenge website](https://physionetchallenges.org/2023/) for mo
 * [Evaluation code](https://github.com/physionetchallenges/evaluation-2023)
 * [Frequently asked questions (FAQ) for this year's Challenge](https://physionetchallenges.org/2023/faq/)
 * [Frequently asked questions (FAQ) about the Challenges in general](https://physionetchallenges.org/faq/)
-

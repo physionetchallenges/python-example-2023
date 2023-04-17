@@ -152,16 +152,28 @@ def load_text_file(filename):
         data = f.read()
     return data
 
+# Parse a value.
+def cast_variable(variable, variable_type, preserve_nan=True):
+    if preserve_nan and is_nan(variable):
+        variable = float('nan')
+    else:
+        if variable_type == bool:
+            variable = sanitize_boolean_value(variable)
+        elif variable_type == int:
+            variable = sanitize_integer_value(variable)
+        elif variable_type == float:
+            variable = sanitize_scalar_value(variable)
+        else:
+            variable = variable_type(variable)
+    return variable
+
 # Get a variable from the patient metadata.
-def get_variable(text, variable_name, variable_type, preserve_nan=True):
+def get_variable(text, variable_name, variable_type):
     variable = None
     for l in text.split('\n'):
         if l.startswith(variable_name):
             variable = l.split(':')[1].strip()
-            if preserve_nan and variable.lower() == 'nan':
-                variable = float('nan')
-            else:
-                variable = variable_type(variable)
+            variable = cast_variable(variable, variable_type)
             return variable
 
 # Get a column from the recording metadata.
@@ -173,7 +185,7 @@ def get_column(string, column, variable_type, sep='\t'):
             column_index = arrs.index(column)
         elif arrs:
             variable = arrs[column_index]
-            variable = variable_type(variable)
+            variable = cast_variable(variable, variable_type)
             variables.append(variable)
     return np.asarray(variables)
 
@@ -348,6 +360,15 @@ def is_integer(x):
     else:
         return False
 
+# Check if a variable is a boolean or represents a boolean.
+def is_boolean(x):
+    if (is_number(x) and float(x)==0) or (remove_extra_characters(x) in ('False', 'false', 'FALSE', 'F', 'f')):
+        return True
+    elif (is_number(x) and float(x)==1) or (remove_extra_characters(x) in ('True', 'true', 'TRUE', 'T', 't')):
+        return True
+    else:
+        return False
+
 # Check if a variable is a finite number or represents a finite number.
 def is_finite_number(x):
     if is_number(x):
@@ -366,17 +387,25 @@ def is_nan(x):
 def remove_extra_characters(x):
     return str(x).replace('"', '').replace("'", "").replace('[', '').replace(']', '').replace(' ', '').strip()
 
-# Sanitize boolean values, e.g., from the Challenge outputs.
+# Sanitize boolean values.
 def sanitize_boolean_value(x):
     x = remove_extra_characters(x)
-    if (is_finite_number(x) and float(x)==0) or (x in ('False', 'false', 'F', 'f')):
+    if (is_number(x) and float(x)==0) or (remove_extra_characters(str(x)) in ('False', 'false', 'FALSE', 'F', 'f')):
         return 0
-    elif (is_finite_number(x) and float(x)==1) or (x in ('True', 'true', 'T', 't')):
+    elif (is_number(x) and float(x)==1) or (remove_extra_characters(str(x)) in ('True', 'true', 'TRUE', 'T', 't')):
         return 1
     else:
         return float('nan')
 
-# Santize scalar values, e.g., from the Challenge outputs.
+# Sanitize integer values.
+def sanitize_integer_value(x):
+    x = remove_extra_characters(x)
+    if is_integer(x):
+        return int(float(x))
+    else:
+        return float('nan')
+
+# Santize scalar values.
 def sanitize_scalar_value(x):
     x = remove_extra_characters(x)
     if is_number(x):

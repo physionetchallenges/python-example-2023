@@ -30,7 +30,7 @@ def load_challenge_data(data_folder, patient_id):
     recordings = list()
     recording_ids = get_recording_ids(recording_metadata)
     for recording_id in recording_ids:
-        if recording_id != 'nan':
+        if not is_nan(recording_id):
             recording_location = os.path.join(data_folder, patient_id, recording_id)
             recording_data, sampling_frequency, channels = load_recording(recording_location)
         else:

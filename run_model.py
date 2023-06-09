@@ -30,12 +30,12 @@ def run_model(model_folder, data_folder, output_folder, allow_failures, verbose)
     num_patients = len(patient_ids)
 
     if num_patients==0:
-        raise Exception('No data was provided.')
+        raise Exception('No data were provided.')
 
     # Create a folder for the Challenge outputs if it does not already exist.
     os.makedirs(output_folder, exist_ok=True)
 
-    # Run the team's model on the Challenge data.
+    # Run the team's model(s) on the Challenge data.
     if verbose >= 1:
         print('Running the Challenge models on the Challenge data...')
 
@@ -46,7 +46,7 @@ def run_model(model_folder, data_folder, output_folder, allow_failures, verbose)
 
         patient_id = patient_ids[i]
 
-        # Allow or disallow the models to fail on parts of the data; this can be helpful for debugging.
+        # Allow or disallow the model(s) to fail on parts of the data; this can be helpful for debugging.
         try:
             outcome_binary, outcome_probability, cpc = run_challenge_models(models, data_folder, patient_id, verbose) ### Teams: Implement this function!!!
         except:
@@ -58,8 +58,6 @@ def run_model(model_folder, data_folder, output_folder, allow_failures, verbose)
                 raise
 
         # Save Challenge outputs.
-
-        # Create a folder for the Challenge outputs if it does not already exist.
         os.makedirs(os.path.join(output_folder, patient_id), exist_ok=True)
         output_file = os.path.join(output_folder, patient_id, patient_id + '.txt')
         save_challenge_outputs(output_file, patient_id, outcome_binary, outcome_probability, cpc)

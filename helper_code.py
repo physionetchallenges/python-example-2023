@@ -11,38 +11,33 @@ import os, numpy as np, scipy as sp, scipy.io
 # Find the folders with data files.
 def find_data_folders(root_folder):
     data_folders = list()
-    for x in os.listdir(root_folder):
+    for x in sorted(os.listdir(root_folder)):
         data_folder = os.path.join(root_folder, x)
         if os.path.isdir(data_folder):
-            data_folders.append(x)
+            data_file = os.path.join(data_folder, x + '.txt')
+            if os.path.isfile(data_file):
+                data_folders.append(x)
     return sorted(data_folders)
 
+# Load the patient metadata: age, sex, etc.
 def load_challenge_data(data_folder, patient_id):
-    # Define file location.
     patient_metadata_file = os.path.join(data_folder, patient_id, patient_id + '.txt')
-    recording_metadata_file = os.path.join(data_folder, patient_id, patient_id + '.tsv')
-
-    # Load non-recording data.
     patient_metadata = load_text_file(patient_metadata_file)
-    recording_metadata = load_text_file(recording_metadata_file)
+    return patient_metadata
 
-    # Load recordings.
-    recordings = list()
-    recording_ids = get_recording_ids(recording_metadata)
-    for recording_id in recording_ids:
-        if not is_nan(recording_id):
-            recording_location = os.path.join(data_folder, patient_id, recording_id)
-            recording_data, sampling_frequency, channels = load_recording(recording_location)
-        else:
-            recording_data = None
-            sampling_frequency = None
-            channels = None
-        recordings.append((recording_data, sampling_frequency, channels))
-
-    return patient_metadata, recording_metadata, recordings
+# Find the record names.
+def find_recording_files(data_folder, patient_id):
+    record_names = list()
+    patient_folder = os.path.join(data_folder, patient_id)
+    for file_name in sorted(os.listdir(patient_folder)):
+        if not file_name.startswith('.') and file_name.endswith('.hea'):
+            root, ext = os.path.splitext(file_name)
+            record_name = '_'.join(root.split('_')[:-1])
+            record_names.append(record_name)
+    return sorted(record_names)
 
 # Load the WFDB data for the Challenge (but not all possible WFDB files).
-def load_recording(record_name):
+def load_recording_data(record_name):
     # Allow either the record name or the header filename.
     root, ext = os.path.splitext(record_name)
     if ext=='':
@@ -78,7 +73,7 @@ def load_recording(record_name):
             sampling_frequency = float(arrs[2])
             num_samples = int(arrs[3])
         # Parse the signal specification lines.
-        else:
+        elif not l.startswith('#') or len(l.strip()) == 0:
             signal_file = arrs[0]
             gain = float(arrs[2].split('/')[0])
             offset = int(arrs[4])
@@ -92,8 +87,8 @@ def load_recording(record_name):
             checksums.append(checksum)
             channels.append(channel)
 
-    # Check that the header file only references one signal file. WFDB format  allows for multiple signal files, but we have not
-    # implemented that here for simplicity.
+    # Check that the header file only references one signal file. WFDB format allows for multiple signal files, but, for
+    # simplicity, we have not done that here.
     num_signal_files = len(set(signal_files))
     if num_signal_files!=1:
         raise NotImplementedError('The header file {}'.format(header_file) \
@@ -121,28 +116,39 @@ def load_recording(record_name):
             raise ValueError('The checksum in header file {}'.format(header_file) \
                 + ' is inconsistent with the initial value for channel'.format(channels[i]))
 
-    # Rescale the signal data using the ADC gains and ADC offsets.
+    # Rescale the signal data using the gains and offsets.
     rescaled_data = np.zeros(np.shape(data), dtype=np.float32)
     for i in range(num_channels):
         rescaled_data[i, :] = (data[i, :]-offsets[i])/gains[i]
 
-    return rescaled_data, sampling_frequency, channels
+    return rescaled_data, channels, sampling_frequency
 
-# Reorder/reselect the channels.
-def reorder_recording_channels(current_data, current_channels, reordered_channels):
-    if current_channels == reordered_channels:
-        return current_data
+# Choose the channels.
+def reduce_channels(current_data, current_channels, requested_channels):
+    if current_channels == requested_channels:
+        reduced_data = current_data
+        reduced_channels = current_channels
     else:
-        indices = list()
-        for channel in reordered_channels:
+        reduced_indices = [i for i, channel in enumerate(current_channels) if channel in requested_channels]
+        reduced_channels = [current_channels[i] for i in reduced_indices]
+        reduced_data = current_data[reduced_indices, :]
+    return reduced_data, reduced_channels
+
+# Choose the channels.
+def expand_channels(current_data, current_channels, requested_channels):
+    if current_channels == requested_channels:
+        expanded_data = current_data
+    else:
+        num_current_channels, num_samples = np.shape(current_data)
+        num_requested_channels = len(requested_channels)
+        expanded_data = np.zeros((num_requested_channels, num_samples))
+        for i, channel in enumerate(requested_channels):
             if channel in current_channels:
-                i = current_channels.index(channel)
-                indices.append(i)
-        num_channels = len(reordered_channels)
-        num_samples = np.shape(current_data)[1]
-        reordered_data = np.zeros((num_channels, num_samples))
-        reordered_data[:, :] = current_data[indices, :]
-        return reordered_data
+                j = current_channels.index(channel)
+                expanded_data[i, :] = current_data[j, :]
+            else:
+                expanded_data[i, :] = float('nan')
+    return expanded_data
 
 ### Helper Challenge data I/O functions
 
@@ -152,46 +158,22 @@ def load_text_file(filename):
         data = f.read()
     return data
 
-# Parse a value.
-def cast_variable(variable, variable_type, preserve_nan=True):
-    if preserve_nan and is_nan(variable):
-        variable = float('nan')
-    else:
-        if variable_type == bool:
-            variable = sanitize_boolean_value(variable)
-        elif variable_type == int:
-            variable = sanitize_integer_value(variable)
-        elif variable_type == float:
-            variable = sanitize_scalar_value(variable)
-        else:
-            variable = variable_type(variable)
-    return variable
-
 # Get a variable from the patient metadata.
 def get_variable(text, variable_name, variable_type):
     variable = None
     for l in text.split('\n'):
         if l.startswith(variable_name):
-            variable = l.split(':')[1].strip()
+            variable = ':'.join(l.split(':')[1:]).strip()
             variable = cast_variable(variable, variable_type)
             return variable
-
-# Get a column from the recording metadata.
-def get_column(string, column, variable_type, sep='\t'):
-    variables = list()
-    for i, l in enumerate(string.split('\n')):
-        arrs = [arr.strip() for arr in l.split(sep) if arr.strip()]
-        if i==0:
-            column_index = arrs.index(column)
-        elif arrs:
-            variable = arrs[column_index]
-            variable = cast_variable(variable, variable_type)
-            variables.append(variable)
-    return np.asarray(variables)
 
 # Get the patient ID variable from the patient data.
 def get_patient_id(string):
     return get_variable(string, 'Patient', str)
+
+# Get the patient ID variable from the patient data.
+def get_hospital(string):
+    return get_variable(string, 'Hospital', str)
 
 # Get the age variable (in years) from the patient data.
 def get_age(string):
@@ -209,9 +191,9 @@ def get_rosc(string):
 def get_ohca(string):
     return get_variable(string, 'OHCA', bool)
 
-# Get the VFib variable from the patient data.
-def get_vfib(string):
-    return get_variable(string, 'VFib', bool)
+# Get the shockable rhythm variable from the patient data.
+def get_shockable_rhythm(string):
+    return get_variable(string, 'Shockable Rhythm', bool)
 
 # Get the TTM variable (in Celsius) from the patient data.
 def get_ttm(string):
@@ -230,7 +212,7 @@ def get_outcome(string):
 
 # Get the Outcome probability variable from the patient data.
 def get_outcome_probability(string):
-    variable = sanitize_scalar_value(get_variable(string, 'Outcome probability', str))
+    variable = sanitize_scalar_value(get_variable(string, 'Outcome Probability', str))
     if variable is None or is_nan(variable):
         raise ValueError('No outcome available. Is your code trying to load labels from the hidden data?')
     return variable
@@ -242,52 +224,35 @@ def get_cpc(string):
         raise ValueError('No CPC score available. Is your code trying to load labels from the hidden data?')
     return variable
 
-# Get the hour number column from the patient data.
-def get_hours(string):
-    return get_column(string, 'Hour', int)
+# Get the utility frequency (in Hertz) from the recording data.
+def get_utility_frequency(string):
+    return get_variable(string, '#Utility frequency', int)
 
-# Get the time column from the patient data.
-def get_times(string):
-    return get_column(string, 'Time', str)
+# Get the start time (in hh:mm:ss format) from the recording data.
+def get_start_time(string):
+    variable = get_variable(string, '#Start time', str)
+    times = tuple(int(value) for value in variable.split(':'))
+    return times
 
-# Get the quality score column from the patient data.
-def get_quality_scores(string):
-    return get_column(string, 'Quality', float)
+# Get the end time (in hh:mm:ss format) from the recording data.
+def get_end_time(string):
+    variable = get_variable(string, '#End time', str)
+    times = tuple(int(value) for value in variable.split(':'))
+    return times
 
-# Get the recording IDs column from the patient data.
-def get_recording_ids(string):
-    return get_column(string, 'Record', str)
+# Convert seconds to days, hours, minutes, seconds.
+def convert_seconds_to_hours_minutes_seconds(seconds):
+    hours = int(seconds/3600 - 24*days)
+    minutes = int(seconds/60 - 24*60*days - 60*hours)
+    seconds = int(seconds - 24*3600*days - 3600*hours - 60*minutes)
+    return hours, minutes, seconds
+
+# Convert hours, minutes, and seconds to seconds.
+def convert_hours_minutes_seconds_to_seconds(hours, minutes, seconds):
+    return 3600*hours + 60*minutes + seconds
 
 ### Challenge label and output I/O functions
 
-# Load the Challenge labels for one file.
-def load_challenge_label(string):
-    if os.path.isfile(string):
-        string = load_text_file(string)
-
-    outcome = get_outcome(string)
-    cpc = get_cpc(string)
-
-    return outcome, cpc
-
-# Load the Challenge labels for all of the files in a folder.
-def load_challenge_labels(folder):
-    patient_folders = find_data_folders(folder)
-    num_patients = len(patient_folders)
-
-    patient_ids = list()
-    outcomes = np.zeros(num_patients, dtype=np.bool_)
-    cpcs = np.zeros(num_patients, dtype=np.float64)
-
-    for i in range(num_patients):
-        patient_metadata_file = os.path.join(folder, patient_folders[i], patient_folders[i] + '.txt')
-        patient_metadata = load_text_file(patient_metadata_file)
-
-        patient_ids.append(get_patient_id(patient_metadata))
-        outcomes[i] = get_outcome(patient_metadata)
-        cpcs[i] = get_cpc(patient_metadata)
-
-    return patient_ids, outcomes, cpcs
 
 # Save the Challenge outputs for one file.
 def save_challenge_outputs(filename, patient_id, outcome, outcome_probability, cpc):
@@ -303,8 +268,8 @@ def save_challenge_outputs(filename, patient_id, outcome, outcome_probability, c
     elif outcome == 1:
         outcome = 'Poor'
     outcome_string = 'Outcome: {}'.format(outcome)
-    outcome_probability_string = 'Outcome probability: {:.3f}'.format(float(outcome_probability))
-    cpc_string = 'CPC: {:.3f}'.format(int(float(cpc)) if is_integer(cpc) else float(cpc))
+    outcome_probability_string = 'Outcome Probability: {:.3f}'.format(outcome_probability)
+    cpc_string = 'CPC: {:.3f}'.format(cast_int_if_int_else_float(cpc))
     output_string = patient_string + '\n' + \
         outcome_string + '\n' + outcome_probability_string + '\n' + cpc_string + '\n'
 
@@ -314,34 +279,6 @@ def save_challenge_outputs(filename, patient_id, outcome, outcome_probability, c
             f.write(output_string)
 
     return output_string
-
-# Load the Challenge outputs for one file.
-def load_challenge_output(string):
-    if os.path.isfile(string):
-        string = load_text_file(string)
-
-    patient_id = get_patient_id(string)
-    outcome = get_outcome(string)
-    outcome_probability = get_outcome_probability(string)
-    cpc = get_cpc(string)
-
-    return patient_id, outcome, outcome_probability, cpc
-
-# Load the Challenge outputs for all of the files in folder.
-def load_challenge_outputs(folder, patient_ids):
-    num_patients = len(patient_ids)
-    outcomes = np.zeros(num_patients, dtype=np.bool_)
-    outcome_probabilities = np.zeros(num_patients, dtype=np.float64)
-    cpcs = np.zeros(num_patients, dtype=np.float64)
-
-    for i in range(num_patients):
-        output_file = os.path.join(folder, patient_ids[i], patient_ids[i] + '.txt')
-        patient_id, outcome, outcome_probability, cpc = load_challenge_output(output_file)
-        outcomes[i] = outcome
-        outcome_probabilities[i] = outcome_probability
-        cpcs[i] = cpc
-
-    return outcomes, outcome_probabilities, cpcs
 
 ### Other helper functions
 
@@ -390,9 +327,9 @@ def remove_extra_characters(x):
 # Sanitize boolean values.
 def sanitize_boolean_value(x):
     x = remove_extra_characters(x)
-    if (is_number(x) and float(x)==0) or (remove_extra_characters(str(x)) in ('False', 'false', 'FALSE', 'F', 'f')):
+    if (is_number(x) and float(x)==0) or (remove_extra_characters(x) in ('False', 'false', 'FALSE', 'F', 'f')):
         return 0
-    elif (is_number(x) and float(x)==1) or (remove_extra_characters(str(x)) in ('True', 'true', 'TRUE', 'T', 't')):
+    elif (is_number(x) and float(x)==1) or (remove_extra_characters(x) in ('True', 'true', 'TRUE', 'T', 't')):
         return 1
     else:
         return float('nan')
@@ -405,10 +342,34 @@ def sanitize_integer_value(x):
     else:
         return float('nan')
 
-# Santize scalar values.
+# Sanitize scalar values.
 def sanitize_scalar_value(x):
     x = remove_extra_characters(x)
     if is_number(x):
         return float(x)
     else:
         return float('nan')
+
+# Cast a value to a particular type.
+def cast_variable(variable, variable_type, preserve_nan=True):
+    if preserve_nan and is_nan(variable):
+        variable = float('nan')
+    else:
+        if variable_type == bool:
+            variable = sanitize_boolean_value(variable)
+        elif variable_type == int:
+            variable = sanitize_integer_value(variable)
+        elif variable_type == float:
+            variable = sanitize_scalar_value(variable)
+        else:
+            variable = variable_type(variable)
+    return variable
+
+# Cast a value to an integer if the value is an integer, a float if the value is a non-integer float, and itself otherwise.
+def cast_int_if_int_else_float(x):
+    if is_integer(x):
+        return int(float(x))
+    elif is_number(x):
+        return float(x)
+    else:
+        return x

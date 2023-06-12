@@ -129,7 +129,7 @@ def reduce_channels(current_data, current_channels, requested_channels):
         reduced_data = current_data
         reduced_channels = current_channels
     else:
-        reduced_indices = [i for i, channel in enumerate(current_channels) if channel in requested_channels]
+        reduced_indices = [current_channels.index(channel) for channel in requested_channels if channel in current_channels]
         reduced_channels = [current_channels[i] for i in reduced_indices]
         reduced_data = current_data[reduced_indices, :]
     return reduced_data, reduced_channels

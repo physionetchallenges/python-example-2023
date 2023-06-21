@@ -37,7 +37,7 @@ def find_recording_files(data_folder, patient_id):
     return sorted(record_names)
 
 # Load the WFDB data for the Challenge (but not all possible WFDB files).
-def load_recording_data(record_name):
+def load_recording_data(record_name, check_values=True):
     # Allow either the record name or the header filename.
     root, ext = os.path.splitext(record_name)
     if ext=='':
@@ -106,15 +106,16 @@ def load_recording_data(record_name):
         raise ValueError('The header file {}'.format(header_file) \
             + ' is inconsistent with the dimensions of the signal file.')
 
-    # Check that the initial value and checksums for the signal data in the signal file are consistent with the initial value and
-    # checksums for the signal data given in the header file.
-    for i in range(num_channels):
-        if data[i, 0]!=initial_values[i]:
-            raise ValueError('The initial value in header file {}'.format(header_file) \
-                + ' is inconsistent with the initial value for channel'.format(channels[i]))
-        if np.sum(data[i, :])!=checksums[i]:
-            raise ValueError('The checksum in header file {}'.format(header_file) \
-                + ' is inconsistent with the initial value for channel'.format(channels[i]))
+    # Check that the initial value and checksums in the signal file are consistent with the initial value and checksums in the
+    # header file.
+    if check_values:
+        for i in range(num_channels):
+            if data[i, 0]!=initial_values[i]:
+                raise ValueError('The initial value in header file {}'.format(header_file) \
+                    + ' is inconsistent with the initial value for channel {} in the signal data'.format(channels[i]))
+            if np.sum(data[i, :])!=checksums[i]:
+                raise ValueError('The checksum in header file {}'.format(header_file) \
+                    + ' is inconsistent with the checksum value for channel {} in the signal data'.format(channels[i]))
 
     # Rescale the signal data using the gains and offsets.
     rescaled_data = np.zeros(np.shape(data), dtype=np.float32)

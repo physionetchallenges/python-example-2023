@@ -113,7 +113,7 @@ def load_recording_data(record_name, check_values=True):
             if data[i, 0]!=initial_values[i]:
                 raise ValueError('The initial value in header file {}'.format(header_file) \
                     + ' is inconsistent with the initial value for channel {} in the signal data'.format(channels[i]))
-            if np.sum(data[i, :])!=checksums[i]:
+            if np.sum(np.asarray(data[i, :], dtype=np.int64))!=checksums[i]:
                 raise ValueError('The checksum in header file {}'.format(header_file) \
                     + ' is inconsistent with the checksum value for channel {} in the signal data'.format(channels[i]))
 

@@ -69,7 +69,7 @@ def run(args):
                             shutil.copy(input_signal_file, output_signal_file)
 
                     # If the start time is before the time limit and the end time is after the time limit, then truncate the recording.
-                    elif start_time < time_limit and end_time >= end_limit:
+                    elif start_time < time_limit and end_time >= time_limit:
                         record_name = header_text.split(' ')[0]
                         raise NotImplementedError('Part (but not all) of record {} exceeds the end time.'.format(record_name)) # All of the files in the dataset end on the hour.
 

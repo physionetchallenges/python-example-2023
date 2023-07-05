@@ -37,7 +37,7 @@ def find_recording_files(data_folder, patient_id):
     return sorted(record_names)
 
 # Load the WFDB data for the Challenge (but not all possible WFDB files).
-def load_recording_data(record_name, check_values=True):
+def load_recording_data(record_name, check_values=False):
     # Allow either the record name or the header filename.
     root, ext = os.path.splitext(record_name)
     if ext=='':
@@ -253,7 +253,6 @@ def convert_hours_minutes_seconds_to_seconds(hours, minutes, seconds):
     return 3600*hours + 60*minutes + seconds
 
 ### Challenge label and output I/O functions
-
 
 # Save the Challenge outputs for one file.
 def save_challenge_outputs(filename, patient_id, outcome, outcome_probability, cpc):

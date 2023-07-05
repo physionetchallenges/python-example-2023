@@ -123,7 +123,7 @@ This repository does not include code for evaluating your entry. Please see the 
 
 This repository also includes code for preparing the validation and test sets. We will run your trained model on data without labels and with 12, 24, 48, and 72 hours of recording data to evaluate its performance with limited amounts of data. You can use this code to prepare the training data in the same way that we prepare the validation and test sets.
 
-- `truncate_data.py`: Truncate the EEG recordings. Usage: run `python truncate_data.py -i input_folder -o output_folder -k 12` to truncate the EEG recordings to 12 hours. We will run your trained models on data with 12, 24, 48, and 72 hours of recording data.
+- `truncate_data.py`: Truncate the EEG recordings. Usage: run `python truncate_data.py -i input_folder -o output_folder -t 12` to truncate the EEG recordings to 12 hours. We will run your trained models on data with 12, 24, 48, and 72 hours of recording data.
 - `remove_labels.py`: Remove the labels. Usage: run `python remove_labels.py -i input_folder -o output_folder` to copy the data and metadata (but not the labels) from `input_folder` to `output_folder`.
 - `remove_data.py`: Remove the binary signal data, i.e., the EEG recordings. Usage: run `python remove_data.py -i input_folder -o output_folder` to copy the labels and metadata (but not the EEG recording data) from `input_folder` to `output_folder`.
 

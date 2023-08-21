@@ -113,14 +113,14 @@ def load_recording_data(record_name, check_values=False):
             if data[i, 0]!=initial_values[i]:
                 raise ValueError('The initial value in header file {}'.format(header_file) \
                     + ' is inconsistent with the initial value for channel {} in the signal data'.format(channels[i]))
-            if np.sum(np.asarray(data[i, :], dtype=np.int64))!=checksums[i]:
+            if np.sum(data[i, :], dtype=np.int16)!=checksums[i]:
                 raise ValueError('The checksum in header file {}'.format(header_file) \
                     + ' is inconsistent with the checksum value for channel {} in the signal data'.format(channels[i]))
 
     # Rescale the signal data using the gains and offsets.
     rescaled_data = np.zeros(np.shape(data), dtype=np.float32)
     for i in range(num_channels):
-        rescaled_data[i, :] = (data[i, :]-offsets[i])/gains[i]
+        rescaled_data[i, :] = (np.asarray(data[i, :], dtype=np.float64) - offsets[i]) / gains[i]
 
     return rescaled_data, channels, sampling_frequency
 

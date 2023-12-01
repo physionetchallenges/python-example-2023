@@ -59,7 +59,8 @@ def load_recording_data(record_name, check_values=False):
     num_samples = None
     signal_files = list()
     gains = list()
-    offsets = list()
+    baselines = list()
+    adc_zeros = list()
     channels = list()
     initial_values = list()
     checksums = list()
@@ -75,14 +76,20 @@ def load_recording_data(record_name, check_values=False):
         # Parse the signal specification lines.
         elif not l.startswith('#') or len(l.strip()) == 0:
             signal_file = arrs[0]
-            gain = float(arrs[2].split('/')[0])
-            offset = int(arrs[4])
+            if '(' in arrs[2] and ')' in arrs[2]:
+                gain = float(arrs[2].split('/')[0].split('(')[0])
+                baseline = float(arrs[2].split('/')[0].split('(')[1].split(')')[0])
+            else:                
+                gain = float(arrs[2].split('/')[0])
+                baseline = 0.0
+            adc_zero = int(arrs[4])
             initial_value = int(arrs[5])
             checksum = int(arrs[6])
             channel = arrs[8]
             signal_files.append(signal_file)
             gains.append(gain)
-            offsets.append(offset)
+            baselines.append(baseline)
+            adc_zeros.append(adc_zero)
             initial_values.append(initial_value)
             checksums.append(checksum)
             channels.append(channel)
@@ -120,7 +127,7 @@ def load_recording_data(record_name, check_values=False):
     # Rescale the signal data using the gains and offsets.
     rescaled_data = np.zeros(np.shape(data), dtype=np.float32)
     for i in range(num_channels):
-        rescaled_data[i, :] = (np.asarray(data[i, :], dtype=np.float64) - offsets[i]) / gains[i]
+        rescaled_data[i, :] = (np.asarray(data[i, :], dtype=np.float64) - baselines[i] - adc_zeros[i]) / gains[i]
 
     return rescaled_data, channels, sampling_frequency
 
